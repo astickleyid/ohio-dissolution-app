@@ -47,7 +47,7 @@ export default function Home() {
         value={get(name)}
         onChange={(e) => set(name, e.target.value)}
         placeholder={placeholder}
-        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-gray-400"
       />
     </div>
   );
@@ -63,7 +63,7 @@ export default function Home() {
       <select
         value={get(name)}
         onChange={(e) => set(name, e.target.value)}
-        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all duration-200 hover:border-gray-400 cursor-pointer"
       >
         <option value="">— Select —</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -80,7 +80,7 @@ export default function Home() {
         value={get(name)}
         onChange={(e) => set(name, e.target.value)}
         placeholder={placeholder}
-        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 hover:border-gray-400"
       />
     </div>
   );
@@ -161,94 +161,116 @@ export default function Home() {
 
   const steps = [
     // 0 Welcome
-    <div key="welcome">
+    <div key="welcome" className="animate-fadeIn">
       <div className="text-center mb-8">
-        <div className="inline-block p-3 bg-blue-100 rounded-full mb-4">
-          <svg className="w-12 h-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="inline-block p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-4 shadow-lg animate-bounce-slow">
+          <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-blue-900 mb-4">Welcome to Ohio Dissolution Form Prep</h2>
-        <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+        <h2 className="text-3xl font-bold text-blue-900 mb-4 animate-slideDown">Welcome to Ohio Dissolution Form Prep</h2>
+        <p className="text-gray-600 text-lg leading-relaxed max-w-2xl mx-auto animate-slideUp">
           This form will help you gather all the information needed for your Ohio dissolution of marriage paperwork. 
           We'll walk you through each section step-by-step.
         </p>
       </div>
       
-      <div className="bg-green-50 border border-green-200 rounded-lg p-5 mb-6">
-        <h3 className="font-semibold text-green-900 mb-2 flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 mb-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <h3 className="font-bold text-green-900 mb-3 flex items-center text-lg">
+          <svg className="w-6 h-6 mr-2 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
           What This Form Does For You
         </h3>
-        <ul className="space-y-2 text-sm text-green-900">
-          <li className="flex items-start">
-            <span className="mr-2">✓</span>
+        <ul className="space-y-3 text-sm text-green-900">
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-green-600 font-bold text-lg">✓</span>
             <span><strong>Collects all required information</strong> for official Ohio dissolution forms</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">✓</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-green-600 font-bold text-lg">✓</span>
             <span><strong>Explains each field</strong> so you know exactly what to provide</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">✓</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-green-600 font-bold text-lg">✓</span>
             <span><strong>Saves you money</strong> on lawyer fees for basic paperwork preparation</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">✓</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-green-600 font-bold text-lg">✓</span>
             <span><strong>Gives you everything you need</strong> to start the dissolution process</span>
           </li>
         </ul>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
-        <h3 className="font-semibold text-blue-900 mb-2">📝 What You'll Need</h3>
-        <p className="text-sm text-blue-900 mb-2">Having these documents handy will make filling out the form easier:</p>
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-blue-900">
-          <li>• Marriage certificate</li>
-          <li>• Recent pay stubs</li>
-          <li>• Tax returns (last 2-3 years)</li>
-          <li>• Bank account information</li>
-          <li>• Property deeds/mortgage info</li>
-          <li>• Vehicle titles</li>
-          <li>• Retirement account statements</li>
-          <li>• List of debts/credit cards</li>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-6 mb-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <h3 className="font-bold text-blue-900 mb-3 text-lg flex items-center">
+          <span className="text-2xl mr-2">📝</span>
+          What You'll Need
+        </h3>
+        <p className="text-sm text-blue-900 mb-3 font-medium">Having these documents handy will make filling out the form easier:</p>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-blue-900">
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">📄</span> Marriage certificate
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">💵</span> Recent pay stubs
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">📊</span> Tax returns (last 2-3 years)
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">🏦</span> Bank account information
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">🏠</span> Property deeds/mortgage info
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">🚗</span> Vehicle titles
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">💰</span> Retirement account statements
+          </li>
+          <li className="flex items-center hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-2 text-blue-600">💳</span> List of debts/credit cards
+          </li>
         </ul>
-        <p className="text-xs text-blue-800 mt-3 italic">Don't worry if you don't have everything — you can estimate or come back to fill in details later.</p>
+        <p className="text-xs text-blue-800 mt-4 italic bg-blue-100 p-2 rounded">💡 Don't worry if you don't have everything — you can estimate or come back to fill in details later.</p>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-6">
-        <h3 className="font-semibold text-amber-900 mb-2">⚖️ Important to Know</h3>
-        <ul className="space-y-2 text-sm text-amber-900">
-          <li className="flex items-start">
-            <span className="mr-2">•</span>
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-6 mb-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <h3 className="font-bold text-amber-900 mb-3 text-lg flex items-center">
+          <span className="text-2xl mr-2">⚖️</span>
+          Important to Know
+        </h3>
+        <ul className="space-y-3 text-sm text-amber-900">
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-amber-600 font-bold">•</span>
             <span><strong>This is NOT legal advice</strong> — it's document preparation assistance</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">•</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-amber-600 font-bold">•</span>
             <span>For legal advice about your situation, consult an Ohio attorney</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">•</span>
-            <span>Your information is confidential and secure</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-amber-600 font-bold">•</span>
+            <span>Your information is confidential and secure 🔒</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">•</span>
-            <span>You can save progress and come back anytime</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-amber-600 font-bold">•</span>
+            <span>You can save progress and come back anytime 💾</span>
           </li>
-          <li className="flex items-start">
-            <span className="mr-2">•</span>
-            <span>It takes about 30-45 minutes to complete</span>
+          <li className="flex items-start hover:translate-x-1 transition-transform duration-200">
+            <span className="mr-3 text-amber-600 font-bold">•</span>
+            <span>It takes about 30-45 minutes to complete ⏱️</span>
           </li>
         </ul>
       </div>
 
-      <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <p className="text-sm text-gray-700 mb-2">
-          <strong>Ready to get started?</strong> Click "Next" to begin with basic court information.
+      <div className="text-center p-6 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border-2 border-gray-300 shadow-sm hover:shadow-md transition-all duration-300">
+        <p className="text-base text-gray-700 mb-3 font-semibold">
+          <strong>Ready to get started?</strong> 🚀 Click "Next" to begin with basic court information.
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-sm text-gray-500">
           The form will guide you through 15 sections, explaining each step along the way.
         </p>
       </div>
@@ -582,32 +604,32 @@ export default function Home() {
   const isLast = step === steps.length - 1;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="bg-blue-900 text-white py-6 px-4 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Ohio Dissolution of Marriage</h1>
-        <p className="text-blue-200 text-sm mt-1">Confidential Intake Form — {SECTION_TITLES[step]}</p>
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white py-8 px-4 text-center shadow-lg">
+        <h1 className="text-3xl font-bold tracking-tight">Ohio Dissolution of Marriage</h1>
+        <p className="text-blue-200 text-base mt-2">Confidential Intake Form — {SECTION_TITLES[step]}</p>
       </div>
 
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm">
         <div className="max-w-3xl mx-auto">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-gray-500">Step {step + 1} of {steps.length}</span>
-            <span className="text-xs text-gray-500">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-600">Step {step + 1} of {steps.length}</span>
+            <span className="text-sm font-medium text-gray-600">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
               style={{ width: `${((step + 1) / steps.length) * 100}%` }}
             />
           </div>
-          <div className="hidden md:flex justify-between mt-2">
+          <div className="hidden md:flex justify-between mt-3">
             {SECTION_TITLES.map((title, i) => (
               <button
                 key={i}
                 onClick={() => setStep(i)}
                 title={title}
-                className={`w-3 h-3 rounded-full transition-colors ${
-                  i < step ? 'bg-blue-600' : i === step ? 'bg-blue-800 ring-2 ring-blue-300' : 'bg-gray-300'
+                className={`w-4 h-4 rounded-full transition-all duration-300 transform hover:scale-125 ${
+                  i < step ? 'bg-blue-600 shadow-md' : i === step ? 'bg-blue-800 ring-2 ring-blue-400 shadow-lg scale-110' : 'bg-gray-300 hover:bg-gray-400'
                 }`}
               />
             ))}
@@ -616,16 +638,18 @@ export default function Home() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 md:p-10">
           {steps[step]}
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>
+            <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg text-red-700 text-sm font-medium shadow-sm animate-fadeIn">
+              ⚠️ {error}
+            </div>
           )}
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+          <div className="flex justify-between mt-8 pt-6 border-t-2 border-gray-100">
             <button
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={step === 0}
-              className="px-5 py-2 rounded-md border border-gray-300 text-gray-700 text-sm font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 text-sm font-semibold disabled:opacity-40 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
             >
               ← Back
             </button>
@@ -633,22 +657,30 @@ export default function Home() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-6 py-2 rounded-md bg-blue-700 text-white text-sm font-medium hover:bg-blue-800 disabled:opacity-60 transition-colors"
+                className="px-8 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none"
               >
-                {submitting ? 'Submitting…' : 'Submit Form'}
+                {submitting ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </span>
+                ) : '✓ Submit Form'}
               </button>
             ) : (
               <button
                 onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
-                className="px-5 py-2 rounded-md bg-blue-700 text-white text-sm font-medium hover:bg-blue-800 transition-colors"
+                className="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
               >
                 Next →
               </button>
             )}
           </div>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-6">
-          All information is transmitted securely and kept strictly confidential.
+        <p className="text-center text-sm text-gray-500 mt-6 font-medium">
+          🔒 All information is transmitted securely and kept strictly confidential.
         </p>
       </div>
     </main>
