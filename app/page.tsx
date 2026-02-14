@@ -249,7 +249,7 @@ export default function Home() {
           <strong>Ready to get started?</strong> Click "Next" to begin with basic court information.
         </p>
         <p className="text-xs text-gray-500">
-          The form will guide you through 14 sections, explaining each step along the way.
+          The form will guide you through 15 sections, explaining each step along the way.
         </p>
       </div>
     </div>,
