@@ -127,7 +127,7 @@ export default function Home() {
         <Field label="Employer Payroll Address" name={`${pfx}_employer_addr`} help="Where your employer is located" />
         <Field label="Employer City, State, Zip" name={`${pfx}_employer_csz`} placeholder="e.g., Columbus, OH 43215" />
         <Field label="Employment Start Date" name={`${pfx}_employ_start`} type="date" help="When did you start this job?" />
-        <Sel label="How Often Are You Paid?" name={`${pfx}_pay_freq`} options={['Weekly','Biweekly (every 2 weeks)','Semimonthly (twice a month)','Monthly']} />
+        <Sel label="How Often Are You Paid?" name={`${pfx}_pay_freq`} options={['Weekly','Biweekly','Semimonthly','Monthly']} help="Biweekly = every 2 weeks; Semimonthly = twice a month" />
       </div>
       <SubH title="Income History (Past 3-4 Years)" />
       <InfoBox>
@@ -461,9 +461,9 @@ export default function Home() {
           <Field label="Amount Per Month" name="spousal_amount" placeholder="$500" help="Monthly payment amount" />
           <Field label="Payments Start On" name="spousal_start" type="date" help="When do payments begin?" />
           <Field label="How Long?" name="spousal_duration" placeholder="24 months or Until remarriage" help="Duration or condition" />
-          <Sel label="How Will Payments Be Made?" name="spousal_method" options={['Direct to recipient','Through Ohio Child Support Payment Central (CSPC)']} help="Payment method" />
+          <Sel label="How Will Payments Be Made?" name="spousal_method" options={['Direct to recipient','Through Ohio CSPC']} help="CSPC = Ohio Child Support Payment Central" />
           <Field label="CSEA County (if using CSPC)" name="spousal_csea" placeholder="Franklin" help="Which county handles payments?" />
-          <Sel label="Collection Method" name="spousal_collection" options={['Income withholding (from paycheck)','Other']} help="How is it collected?" />
+          <Sel label="Collection Method" name="spousal_collection" options={['Income withholding','Other']} help="Income withholding = automatic deduction from paycheck" />
           <Sel label="Ends if Recipient Dies?" name="spousal_term_death" options={['Yes','No']} help="Typical answer is Yes" />
           <Sel label="Ends if Recipient Lives with New Partner?" name="spousal_term_cohab" options={['Yes','No']} help="Cohabitation termination" />
           <Sel label="Ends if Recipient Remarries?" name="spousal_term_remarry" options={['Yes','No']} help="Typical answer is Yes" />
