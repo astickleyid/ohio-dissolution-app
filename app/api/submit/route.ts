@@ -235,11 +235,13 @@ function buildHtmlEmail(data: Record<string, string>): string {
 }
 
 export async function POST(req: NextRequest) {
-  console.log('📥 Submission received at', new Date().toISOString());
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) console.log('📥 Submission received at', new Date().toISOString());
   
   try {
     const data: Record<string, string> = await req.json();
-    console.log('✅ Data parsed successfully. Fields count:', Object.keys(data).length);
+    if (isDev) console.log('✅ Data parsed successfully. Fields count:', Object.keys(data).length);
 
     const submissionId = `submission_${Date.now()}`;
     const submittedAt = new Date().toISOString();
@@ -251,7 +253,7 @@ export async function POST(req: NextRequest) {
       const ids: string[] = (await kv.get('submission_ids')) ?? [];
       ids.push(submissionId);
       await kv.set('submission_ids', ids);
-      console.log('✅ Data saved to KV store:', submissionId);
+      if (isDev) console.log('✅ Data saved to KV store:', submissionId);
     } catch (kvErr) {
       console.warn('⚠️ KV save failed (non-fatal):', kvErr);
     }
@@ -260,10 +262,12 @@ export async function POST(req: NextRequest) {
     const toEmail = process.env.NOTIFY_EMAIL ?? 'astickley@example.com';
     const fromEmail = process.env.FROM_EMAIL ?? 'onboarding@resend.dev';
 
-    console.log('📧 Attempting to send email...');
-    console.log('  From:', fromEmail);
-    console.log('  To:', toEmail);
-    console.log('  Resend API Key configured:', process.env.RESEND_API_KEY ? 'Yes' : 'No');
+    if (isDev) {
+      console.log('📧 Attempting to send email...');
+      console.log('  From:', fromEmail);
+      console.log('  To:', toEmail);
+      console.log('  Resend API Key configured:', process.env.RESEND_API_KEY ? 'Yes' : 'No');
+    }
 
     const p1Name = data.p1_name || 'Unknown';
     const p2Name = data.p2_name || 'Unknown';
@@ -277,7 +281,7 @@ export async function POST(req: NextRequest) {
         subject: `[Dissolution Intake] ${p1Name} & ${p2Name} — ${new Date().toLocaleDateString('en-US')}`,
         html: buildHtmlEmail(data),
       });
-      console.log('✅ Email sent successfully:', emailResult);
+      if (isDev) console.log('✅ Email sent successfully:', emailResult);
     } catch (emailErr) {
       console.error('❌ Email sending failed:', emailErr);
       // Don't throw - we still want to return success if KV save worked
@@ -286,7 +290,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log('✅ Submission completed successfully');
+    if (isDev) console.log('✅ Submission completed successfully');
     return NextResponse.json({ ok: true, id: submissionId });
   } catch (err: unknown) {
     console.error('❌ Submit error:', err);
