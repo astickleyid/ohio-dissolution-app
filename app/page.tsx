@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Onboarding from './components/Onboarding';
 
 const SECTION_TITLES = [
-  'Quick Setup',
+  'Auto-Fill Setup',
   'Welcome',
   'Court Info',
   'Petitioner 1',
