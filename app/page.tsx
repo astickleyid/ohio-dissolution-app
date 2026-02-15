@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Onboarding from './components/Onboarding';
 
 const SECTION_TITLES = [
+  'Quick Setup',
   'Welcome',
   'Court Info',
   'Petitioner 1',
@@ -199,8 +201,17 @@ export default function Home() {
     </div>
   );
 
+  const handleOnboardingComplete = useCallback((extractedData: Record<string, string>) => {
+    // Merge extracted data from Plaid/Credit Check/OCR into form data
+    setData(prev => ({ ...prev, ...extractedData }));
+    setStep(1); // Move to Welcome step
+  }, []);
+
   const steps = [
-    // 0 Welcome
+    // 0 Quick Setup (Onboarding)
+    <Onboarding key="onboarding" onComplete={handleOnboardingComplete} />,
+
+    // 1 Welcome
     <div key="welcome" className="animate-fadeIn">
       <div className="text-center mb-8">
         <div className="inline-block p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-4 shadow-lg animate-bounce-slow">
@@ -311,7 +322,7 @@ export default function Home() {
           <strong>Ready to get started?</strong> 🚀 Click "Next" to begin with basic court information.
         </p>
         <p className="text-sm text-gray-500">
-          The form will guide you through 15 sections, explaining each step along the way.
+          The form will guide you through 16 sections, explaining each step along the way.
         </p>
       </div>
     </div>,
