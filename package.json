@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "verify-plaid": "node verify-plaid-config.js"
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0",

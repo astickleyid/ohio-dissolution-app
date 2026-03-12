@@ -22,26 +22,27 @@ A Next.js application for Ohio dissolution of marriage document preparation with
 2. (Optional) Plaid account for bank/credit features - [Sign up here](https://dashboard.plaid.com/signup)
 3. (Optional) Resend account for email notifications - [Sign up here](https://resend.com)
 
+### ✅ Plaid Configuration Status
+
+**The Plaid integration is now configured and ready to use!**
+
+See [PLAID_SETUP_COMPLETE.md](./PLAID_SETUP_COMPLETE.md) for details.
+
+To verify the configuration:
+```bash
+node verify-plaid-config.js
+```
+
 ### Environment Setup
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env.local
-   ```
+The `.env.local` file has been created with Plaid credentials. For other optional features:
 
-2. Configure your environment variables in `.env.local`:
-
-   **For Plaid Integration (Optional):**
-   - Get credentials from [Plaid Dashboard](https://dashboard.plaid.com)
-   - Set `PLAID_CLIENT_ID`, `PLAID_SECRET`, and `PLAID_ENV`
-   - Use `sandbox` environment for testing
-
-   **For Email Notifications (Optional):**
+1. **For Email Notifications (Optional):**
    - Get API key from [Resend](https://resend.com)
-   - Set `RESEND_API_KEY`, `NOTIFY_EMAIL`, and `FROM_EMAIL`
+   - Set `RESEND_API_KEY`, `NOTIFY_EMAIL`, and `FROM_EMAIL` in `.env.local`
 
-   **For Admin Panel (Optional):**
-   - Set `NEXT_PUBLIC_ADMIN_PASSWORD` to secure the admin panel
+2. **For Admin Panel (Optional):**
+   - Set `NEXT_PUBLIC_ADMIN_PASSWORD` in `.env.local` to secure the admin panel
 
 ### Running the Development Server
 
