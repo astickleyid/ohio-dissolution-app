@@ -11,8 +11,8 @@ The Plaid API has been successfully configured with the following credentials:
 
 | Variable | Value | Status |
 |----------|-------|--------|
-| `PLAID_CLIENT_ID` | `699105dd4c01cb002166c123` | ✅ Configured |
-| `PLAID_SECRET` | `c270bfc5a4a062dc91724c4bcd6af0` | ✅ Configured |
+| `PLAID_CLIENT_ID` | `[Configured in .env.local]` | ✅ Configured |
+| `PLAID_SECRET` | `[Configured in .env.local]` | ✅ Configured |
 | `PLAID_ENV` | `sandbox` | ✅ Configured |
 
 ### Configuration File
