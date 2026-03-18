@@ -1,4 +1,5 @@
 'use client';
+import PlaidLinkButton, { type PlaidResult } from './components/PlaidLinkButton';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ type FormData = Record<string, string>;
 export default function Home() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [plaidData, setPlaidData] = useState<PlaidResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<FormData>({});
@@ -45,6 +47,7 @@ export default function Home() {
         value={get(name)}
         onChange={(e) => set(name, e.target.value)}
         placeholder={placeholder}
+        required={required}
         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
@@ -60,6 +63,7 @@ export default function Home() {
       <select
         value={get(name)}
         onChange={(e) => set(name, e.target.value)}
+        required={required}
         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
       >
         <option value="">— Select —</option>
@@ -229,6 +233,24 @@ export default function Home() {
 
     // 7 Financial Accounts
     <div key="financial">
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm font-semibold text-blue-900 mb-1">Optional: Connect your bank to auto-fill</p>
+        <p className="text-xs text-blue-700 mb-3">Securely link your accounts to pre-fill balances and account info. Read-only access only.</p>
+        <PlaidLinkButton
+          onSuccess={(result) => {
+            setPlaidData(result);
+            // Pre-fill form fields returned by Plaid
+            Object.entries(result.formFields).forEach(([k, v]) => {
+              setFormData((prev: Record<string, string>) => ({ ...prev, [k]: v }));
+            });
+          }}
+        />
+        {plaidData && (
+          <p className="text-xs text-green-700 mt-2">
+            ✓ Pre-filled from {plaidData.breakdown.total} connected account{plaidData.breakdown.total !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
       <SH title="Financial Accounts" />
       <Sel label="Do either of you have financial accounts?" name="has_accounts" options={['No','Yes']} />
       {get('has_accounts') === 'Yes' && <>
