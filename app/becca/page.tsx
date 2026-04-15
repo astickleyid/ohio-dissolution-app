@@ -80,18 +80,18 @@ const CASE_DATA: Record<string, string> = {
   termination_pref: 'Date of Final Hearing',
 
   // Assets — still need to confirm from both parties
-  has_real_estate: 'No',
+  has_realestate: 'No',
   has_vehicles: '',
   has_accounts: '',
   has_retirement: '',
   has_other_property: 'No',
   has_business: 'No',
   has_stocks: 'No',
-  household_divided: 'Yes',
+  hh_divided: 'Yes',
 
   // Debts & Support — still need from both parties
   has_debts: '',
-  spousal_support: 'No',
+  has_spousal: 'No',
 
   // Name change — Nicole confirmed restoring to maiden name
   has_name_change: 'Yes',
@@ -101,6 +101,61 @@ const CASE_DATA: Record<string, string> = {
 };
 
 type FormData = Record<string, string>;
+
+const LEGACY_FIELD_ALIASES: Record<string, string> = {
+  has_real_estate: 'has_realestate',
+  household_divided: 'hh_divided',
+  spousal_support: 'has_spousal',
+  spousal_payer: 'spousal_direction',
+  acct_p1_bank: 'acct_p1_1_inst',
+  acct_p2_bank: 'acct_p2_1_inst',
+  ret_p1_inst: 'ret_p1_1_inst',
+  ret_p1_amt: 'ret_p1_1_amount',
+  ret_p2_inst: 'ret_p2_1_inst',
+  ret_p2_amt: 'ret_p2_1_amount',
+  v1_year: 'veh1_year',
+  v1_make: 'veh1_make',
+  v1_model: 'veh1_model',
+  v1_vin: 'veh1_vin',
+  v1_value: 'veh1_value',
+  v1_gets: 'veh1_gets',
+  v2_year: 'veh2_year',
+  v2_make: 'veh2_make',
+  v2_model: 'veh2_model',
+  v2_vin: 'veh2_vin',
+  v2_value: 'veh2_value',
+  v2_gets: 'veh2_gets',
+  p1_debt1_creditor: 'debt_p1_1_creditor',
+  p1_debt1_balance: 'debt_p1_1_balance',
+  p1_debt1_acct: 'debt_p1_1_acct4',
+  p1_debt2_creditor: 'debt_p1_2_creditor',
+  p1_debt2_balance: 'debt_p1_2_balance',
+  p1_debt2_acct: 'debt_p1_2_acct4',
+  p1_debt3_creditor: 'debt_p1_3_creditor',
+  p1_debt3_balance: 'debt_p1_3_balance',
+  p1_debt3_acct: 'debt_p1_3_acct4',
+  p2_debt1_creditor: 'debt_p2_1_creditor',
+  p2_debt1_balance: 'debt_p2_1_balance',
+  p2_debt1_acct: 'debt_p2_1_acct4',
+  p2_debt2_creditor: 'debt_p2_2_creditor',
+  p2_debt2_balance: 'debt_p2_2_balance',
+  p2_debt2_acct: 'debt_p2_2_acct4',
+  p2_debt3_creditor: 'debt_p2_3_creditor',
+  p2_debt3_balance: 'debt_p2_3_balance',
+  p2_debt3_acct: 'debt_p2_3_acct4',
+};
+
+function normalizeLegacyCaseData(input: FormData): FormData {
+  const normalized = { ...input };
+  for (const [legacyKey, canonicalKey] of Object.entries(LEGACY_FIELD_ALIASES)) {
+    if (normalized[canonicalKey]?.trim()) continue;
+    const legacyValue = normalized[legacyKey];
+    if (typeof legacyValue === 'string' && legacyValue.trim() !== '') {
+      normalized[canonicalKey] = legacyValue;
+    }
+  }
+  return normalized;
+}
 
 const SECTIONS = [
   'Court Info',
@@ -119,17 +174,12 @@ const FILING_INFO = {
   address: '429 Michigan St, Toledo, OH 43604',
 };
 
-// Fields that have been confirmed vs still need input
-const NEEDS_INFO: Record<string, boolean> = {};
-Object.entries(CASE_DATA).forEach(([k, v]) => {
-  if (v === '') NEEDS_INFO[k] = true;
-});
-
 export default function BeccaPage() {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<FormData>(CASE_DATA);
+  const [data, setData] = useState<FormData>(normalizeLegacyCaseData(CASE_DATA));
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved' | 'loading'>('loading');
   const [plaidTarget, setPlaidTarget] = useState<'p1' | 'p2' | null>(null);
   const [linkToken, setLinkToken] = useState<string | null>(null);
@@ -146,7 +196,7 @@ export default function BeccaPage() {
       .then(res => {
         if (res.found && res.data) {
           // Merge saved data over defaults, preserving pre-fills for any empty saved fields
-          setData(prev => ({ ...prev, ...res.data }));
+          setData(prev => normalizeLegacyCaseData({ ...prev, ...res.data }));
           setSaveStatus('saved');
         } else {
           setSaveStatus('unsaved');
@@ -281,9 +331,9 @@ export default function BeccaPage() {
           // Auto-fill up to 3 debt slots for the petitioner
           result.debts.slice(0, 3).forEach((debt: { creditor: string; balance: number; last4: string }, i: number) => {
             const n = i + 1;
-            updates[`${pfx}_debt${n}_creditor`] = debt.creditor;
-            updates[`${pfx}_debt${n}_balance`] = `$${debt.balance.toFixed(2)}`;
-            updates[`${pfx}_debt${n}_acct`] = debt.last4;
+            updates[`debt_${pfx}_${n}_creditor`] = debt.creditor;
+            updates[`debt_${pfx}_${n}_balance`] = `$${debt.balance.toFixed(2)}`;
+            updates[`debt_${pfx}_${n}_acct4`] = debt.last4;
           });
           setData(updates);
           triggerSave(updates);
@@ -466,8 +516,8 @@ export default function BeccaPage() {
       <SH title="Assets & Property" />
       <div className="space-y-4">
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <Sel label="Do either of you own real estate?" name="has_real_estate" options={['No','Yes']} />
-          {get('has_real_estate') === 'Yes' && (
+          <Sel label="Do either of you own real estate?" name="has_realestate" options={['No','Yes']} />
+          {get('has_realestate') === 'Yes' && (
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-5">
               <Field label="Property Address" name="re1_address" />
               <Field label="Fair Market Value" name="re1_fmv" placeholder="$" />
@@ -482,12 +532,12 @@ export default function BeccaPage() {
             <div className="mt-3 space-y-3">
               {['1','2'].map(n => (
                 <div key={n} className="grid grid-cols-2 md:grid-cols-3 gap-x-4 border-t border-gray-200 pt-3">
-                  <Field label={`Vehicle ${n} — Year`} name={`v${n}_year`} />
-                  <Field label="Make" name={`v${n}_make`} />
-                  <Field label="Model" name={`v${n}_model`} />
-                  <Field label="VIN" name={`v${n}_vin`} />
-                  <Field label="Value" name={`v${n}_value`} placeholder="$" />
-                  <Sel label="Who Gets It?" name={`v${n}_gets`} options={['Petitioner 1','Petitioner 2']} />
+                  <Field label={`Vehicle ${n} — Year`} name={`veh${n}_year`} />
+                  <Field label="Make" name={`veh${n}_make`} />
+                  <Field label="Model" name={`veh${n}_model`} />
+                  <Field label="VIN" name={`veh${n}_vin`} />
+                  <Field label="Value" name={`veh${n}_value`} placeholder="$" />
+                  <Sel label="Who Gets It?" name={`veh${n}_gets`} options={['Petitioner 1','Petitioner 2']} />
                 </div>
               ))}
             </div>
@@ -497,8 +547,8 @@ export default function BeccaPage() {
           <Sel label="Do either of you have bank accounts?" name="has_accounts" options={['No','Yes']} />
           {get('has_accounts') === 'Yes' && (
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-5">
-              <Field label="P1 — Bank & Account Type" name="acct_p1_bank" placeholder="e.g. Chase Checking" />
-              <Field label="P2 — Bank & Account Type" name="acct_p2_bank" placeholder="e.g. Chase Checking" />
+              <Field label="P1 — Bank & Account Type" name="acct_p1_1_inst" placeholder="e.g. Chase Checking" />
+              <Field label="P2 — Bank & Account Type" name="acct_p2_1_inst" placeholder="e.g. Chase Checking" />
             </div>
           )}
         </div>
@@ -506,10 +556,10 @@ export default function BeccaPage() {
           <Sel label="Do either of you have retirement accounts?" name="has_retirement" options={['No','Yes']} />
           {get('has_retirement') === 'Yes' && (
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-x-5">
-              <Field label="P1 — Retirement Institution" name="ret_p1_inst" />
-              <Field label="P1 — Amount / Share" name="ret_p1_amt" placeholder="$" />
-              <Field label="P2 — Retirement Institution" name="ret_p2_inst" />
-              <Field label="P2 — Amount / Share" name="ret_p2_amt" placeholder="$" />
+              <Field label="P1 — Retirement Institution" name="ret_p1_1_inst" />
+              <Field label="P1 — Amount / Share" name="ret_p1_1_amount" placeholder="$" />
+              <Field label="P2 — Retirement Institution" name="ret_p2_1_inst" />
+              <Field label="P2 — Amount / Share" name="ret_p2_1_amount" placeholder="$" />
             </div>
           )}
         </div>
@@ -545,17 +595,17 @@ export default function BeccaPage() {
           <SubH title="Petitioner 1 (Becca) pays:" />
           {['1','2','3'].map(n => (
             <div key={n} className="grid grid-cols-3 gap-x-4">
-              <Field label={`Creditor ${n}`} name={`p1_debt${n}_creditor`} />
-              <Field label="Balance" name={`p1_debt${n}_balance`} placeholder="$" />
-              <Field label="Acct last 4" name={`p1_debt${n}_acct`} placeholder="1234" />
+              <Field label={`Creditor ${n}`} name={`debt_p1_${n}_creditor`} />
+              <Field label="Balance" name={`debt_p1_${n}_balance`} placeholder="$" />
+              <Field label="Acct last 4" name={`debt_p1_${n}_acct4`} placeholder="1234" />
             </div>
           ))}
           <SubH title="Petitioner 2 (Nicole) pays:" />
           {['1','2','3'].map(n => (
             <div key={n} className="grid grid-cols-3 gap-x-4">
-              <Field label={`Creditor ${n}`} name={`p2_debt${n}_creditor`} />
-              <Field label="Balance" name={`p2_debt${n}_balance`} placeholder="$" />
-              <Field label="Acct last 4" name={`p2_debt${n}_acct`} placeholder="1234" />
+              <Field label={`Creditor ${n}`} name={`debt_p2_${n}_creditor`} />
+              <Field label="Balance" name={`debt_p2_${n}_balance`} placeholder="$" />
+              <Field label="Acct last 4" name={`debt_p2_${n}_acct4`} placeholder="1234" />
             </div>
           ))}
         </div>
@@ -565,10 +615,10 @@ export default function BeccaPage() {
     // 6 Spousal Support
     <div key="spousal">
       <SH title="Spousal Support" />
-      <Sel label="Will either party pay spousal support?" name="spousal_support" options={['No','Yes']} />
-      {get('spousal_support') === 'Yes' && (
+      <Sel label="Will either party pay spousal support?" name="has_spousal" options={['No','Yes']} />
+      {get('has_spousal') === 'Yes' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 mt-4">
-          <Sel label="Who Pays?" name="spousal_payer" options={['Petitioner 1 pays Petitioner 2','Petitioner 2 pays Petitioner 1']} />
+          <Sel label="Who Pays?" name="spousal_direction" options={['Petitioner 1 pays Petitioner 2','Petitioner 2 pays Petitioner 1']} />
           <Field label="Amount per Month" name="spousal_amount" placeholder="$" />
           <Field label="Commencing Date" name="spousal_start" type="date" />
           <Field label="Duration (months or 'indefinite')" name="spousal_duration" />
@@ -593,7 +643,7 @@ export default function BeccaPage() {
     <div key="review">
       <SH title="Review Your Information" />
       <p className="text-sm text-gray-600 mb-6">
-        Review what's been filled in. Fields marked <span className="text-amber-600 font-medium">⚠ needs info</span> are still blank — you can go back and fill them in, or submit now and we'll follow up.
+        Review what&apos;s been filled in. Fields marked <span className="text-amber-600 font-medium">⚠ needs info</span> are still blank — you can go back and fill them in, or submit now and we&apos;ll follow up.
       </p>
       <div className="space-y-3">
         {Object.entries(data).filter(([, v]) => v !== '').map(([k, v]) => (
@@ -613,15 +663,22 @@ export default function BeccaPage() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setSubmitError(null);
     try {
-      await fetch('/api/submit', {
+      const payload = normalizeLegacyCaseData({ ...data, _case: 'becca-nicole' });
+      const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, _case: 'becca-nicole' }),
+        body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? 'Submission failed');
+      }
       setSubmitted(true);
-    } catch {
-      alert('Submission failed — please try again.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Submission failed — please try again.';
+      setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
@@ -633,7 +690,7 @@ export default function BeccaPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 max-w-md text-center">
           <div className="text-4xl mb-4">✅</div>
           <h1 className="text-xl font-bold text-gray-800 mb-2">Information Submitted</h1>
-          <p className="text-gray-600 text-sm">We've received the case details. The next step is PDF generation.</p>
+          <p className="text-gray-600 text-sm">We&apos;ve received the case details. The next step is PDF generation.</p>
         </div>
       </main>
     );
@@ -700,6 +757,9 @@ export default function BeccaPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
           {steps[step]}
+          {submitError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{submitError}</div>
+          )}
 
           <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
             <button

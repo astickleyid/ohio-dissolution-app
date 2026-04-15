@@ -64,10 +64,14 @@ export async function POST(req: NextRequest) {
     // Mortgages
     liabilities.mortgage?.forEach((mortgage) => {
       const acct = accounts.find(a => a.account_id === mortgage.account_id);
+      const mortgageBalance =
+        (mortgage as { outstanding_principal_balance?: number }).outstanding_principal_balance
+        ?? acct?.balances.current
+        ?? 0;
       debts.push({
         creditor: acct?.name ?? 'Mortgage',
         type: 'Mortgage',
-        balance: mortgage.current_late_fee ?? acct?.balances.current ?? 0,
+        balance: mortgageBalance,
         last4: acct?.mask ?? '****',
         monthlyPayment: mortgage.next_monthly_payment ?? undefined,
       });

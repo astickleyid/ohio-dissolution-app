@@ -125,14 +125,85 @@ const FIELD_LABELS: Record<string, string> = {
 
   has_name_change: 'Name Change', name_change_who: 'Name Change Who',
   name_change_current: 'Current Name', name_change_restore: 'Restore to Name',
+  p2_maiden: 'P2 Maiden Name',
+  has_other_property: 'Has Other Property',
+  has_business: 'Has Business Interest',
+  has_stocks: 'Has Stocks/Investments',
 
   additional_matters: 'Additional Matters',
   notes_questions: 'Questions / Notes',
 };
 
+const FIELD_ALIASES: Record<string, string> = {
+  has_real_estate: 'has_realestate',
+  household_divided: 'hh_divided',
+  spousal_support: 'has_spousal',
+  spousal_payer: 'spousal_direction',
+  acct_p1_bank: 'acct_p1_1_inst',
+  acct_p2_bank: 'acct_p2_1_inst',
+  ret_p1_inst: 'ret_p1_1_inst',
+  ret_p1_amt: 'ret_p1_1_amount',
+  ret_p2_inst: 'ret_p2_1_inst',
+  ret_p2_amt: 'ret_p2_1_amount',
+  v1_year: 'veh1_year',
+  v1_make: 'veh1_make',
+  v1_model: 'veh1_model',
+  v1_vin: 'veh1_vin',
+  v1_value: 'veh1_value',
+  v1_gets: 'veh1_gets',
+  v2_year: 'veh2_year',
+  v2_make: 'veh2_make',
+  v2_model: 'veh2_model',
+  v2_vin: 'veh2_vin',
+  v2_value: 'veh2_value',
+  v2_gets: 'veh2_gets',
+  p1_debt1_creditor: 'debt_p1_1_creditor',
+  p1_debt1_balance: 'debt_p1_1_balance',
+  p1_debt1_acct: 'debt_p1_1_acct4',
+  p1_debt2_creditor: 'debt_p1_2_creditor',
+  p1_debt2_balance: 'debt_p1_2_balance',
+  p1_debt2_acct: 'debt_p1_2_acct4',
+  p1_debt3_creditor: 'debt_p1_3_creditor',
+  p1_debt3_balance: 'debt_p1_3_balance',
+  p1_debt3_acct: 'debt_p1_3_acct4',
+  p2_debt1_creditor: 'debt_p2_1_creditor',
+  p2_debt1_balance: 'debt_p2_1_balance',
+  p2_debt1_acct: 'debt_p2_1_acct4',
+  p2_debt2_creditor: 'debt_p2_2_creditor',
+  p2_debt2_balance: 'debt_p2_2_balance',
+  p2_debt2_acct: 'debt_p2_2_acct4',
+  p2_debt3_creditor: 'debt_p2_3_creditor',
+  p2_debt3_balance: 'debt_p2_3_balance',
+  p2_debt3_acct: 'debt_p2_3_acct4',
+};
+
+function normalizeSubmissionData(input: Record<string, string>): Record<string, string> {
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(input)) {
+    normalized[key] = typeof value === 'string' ? value : String(value ?? '');
+  }
+  for (const [legacyKey, canonicalKey] of Object.entries(FIELD_ALIASES)) {
+    if (normalized[canonicalKey]?.trim()) continue;
+    const legacyValue = normalized[legacyKey];
+    if (typeof legacyValue === 'string' && legacyValue.trim() !== '') {
+      normalized[canonicalKey] = legacyValue;
+    }
+  }
+  return normalized;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function buildHtmlEmail(data: Record<string, string>): string {
-  const p1Name = data.p1_name || 'Unknown';
-  const p2Name = data.p2_name || 'Unknown';
+  const p1Name = escapeHtml(data.p1_name || 'Unknown');
+  const p2Name = escapeHtml(data.p2_name || 'Unknown');
   const submittedAt = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
 
   const sections: Record<string, string[]> = {
@@ -196,21 +267,43 @@ function buildHtmlEmail(data: Record<string, string>): string {
       .map((f) => `
         <tr>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;color:#555;font-size:13px;width:40%;white-space:nowrap">
-            ${FIELD_LABELS[f] ?? f}
+            ${escapeHtml(FIELD_LABELS[f] ?? f)}
           </td>
           <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;word-break:break-word">
-            ${data[f]}
+            ${escapeHtml(data[f])}
           </td>
         </tr>`)
       .join('');
 
     if (rows) {
       sectionHtml += `
-        <h3 style="margin:24px 0 8px;font-size:14px;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px">${sectionName}</h3>
+        <h3 style="margin:24px 0 8px;font-size:14px;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px">${escapeHtml(sectionName)}</h3>
         <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
           ${rows}
         </table>`;
     }
+  }
+
+  const knownFields = new Set(Object.values(sections).flat());
+  const extraRows = Object.entries(data)
+    .filter(([field, value]) => value.trim() !== '' && !field.startsWith('_') && !knownFields.has(field))
+    .map(([field, value]) => `
+      <tr>
+        <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;color:#555;font-size:13px;width:40%;white-space:nowrap">
+          ${escapeHtml(FIELD_LABELS[field] ?? field)}
+        </td>
+        <td style="padding:6px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;word-break:break-word">
+          ${escapeHtml(value)}
+        </td>
+      </tr>`)
+    .join('');
+
+  if (extraRows) {
+    sectionHtml += `
+      <h3 style="margin:24px 0 8px;font-size:14px;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px">Other Captured Fields</h3>
+      <table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden">
+        ${extraRows}
+      </table>`;
   }
 
   return `
@@ -236,7 +329,8 @@ function buildHtmlEmail(data: Record<string, string>): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const data: Record<string, string> = await req.json();
+    const rawData: Record<string, string> = await req.json();
+    const data = normalizeSubmissionData(rawData);
 
     const submissionId = `submission_${Date.now()}`;
     const submittedAt = new Date().toISOString();

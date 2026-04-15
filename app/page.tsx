@@ -1,7 +1,7 @@
 'use client';
 import PlaidLinkButton, { type PlaidResult } from './components/PlaidLinkButton';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 const SECTION_TITLES = [
@@ -30,10 +30,95 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<FormData>({});
+  const [caseId, setCaseId] = useState<string>('');
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const set = (key: string, val: string) =>
     setData((d) => ({ ...d, [key]: val }));
   const get = (key: string) => data[key] ?? '';
+
+  // Initialize caseId from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('caseId');
+    if (stored) {
+      setCaseId(stored);
+    } else {
+      const newId = crypto.randomUUID();
+      localStorage.setItem('caseId', newId);
+      setCaseId(newId);
+    }
+  }, []);
+
+  // Restore saved data on mount (if caseId is set)
+  useEffect(() => {
+    if (!caseId) return;
+    const restoreData = async () => {
+      try {
+        const res = await fetch(`/api/autosave?caseId=${caseId}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.found && json.data) {
+            setData(json.data.formData || {});
+            setStep(json.data.step || 0);
+            setSavedAt(json.data.saved_at || null);
+          }
+        }
+      } catch (err) {
+        // Silently fail if autosave API isn't available
+        console.log('Autosave restore not available');
+      }
+    };
+    restoreData();
+  }, [caseId]);
+
+  // Debounced autosave on data/step change
+  const performAutosave = useCallback(
+    async (currentData: FormData, currentStep: number) => {
+      if (!caseId) return;
+      setSaveStatus('saving');
+      try {
+        const res = await fetch('/api/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caseId,
+            data: { formData: currentData, step: currentStep, saved_at: new Date().toISOString() },
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setSavedAt(json.saved_at);
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } else {
+          setSaveStatus('error');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        }
+      } catch (err) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
+    },
+    [caseId]
+  );
+
+  // Trigger debounced save on data/step change
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      performAutosave(data, step);
+    }, 500);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [data, step, performAutosave]);
 
   const Field = ({
     label, name, type = 'text', placeholder, required,
@@ -241,7 +326,7 @@ export default function Home() {
             setPlaidData(result);
             // Pre-fill form fields returned by Plaid
             Object.entries(result.formFields).forEach(([k, v]) => {
-              setFormData((prev: Record<string, string>) => ({ ...prev, [k]: v }));
+              setData((prev: Record<string, string>) => ({ ...prev, [k]: v }));
             });
           }}
         />
@@ -449,7 +534,17 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs text-gray-500">Step {step + 1} of {steps.length}</span>
-            <span className="text-xs text-gray-500">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
+            <div className="flex items-center gap-3">
+              {saveStatus === 'saving' && <span className="text-xs text-gray-500">Saving...</span>}
+              {saveStatus === 'saved' && savedAt && (
+                <span className="text-xs text-gray-500">
+                  Autosaved {new Date(savedAt).toLocaleTimeString()}
+                </span>
+              )}
+              {saveStatus === 'error' && <span className="text-xs text-red-500">Save failed</span>}
+              {saveStatus === 'idle' && !savedAt && <span className="text-xs text-gray-500">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>}
+              {saveStatus === 'idle' && savedAt && <span className="text-xs text-gray-500">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>}
+            </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
