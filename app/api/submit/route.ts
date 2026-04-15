@@ -189,6 +189,10 @@ function normalizeSubmissionData(input: Record<string, string>): Record<string, 
       normalized[canonicalKey] = legacyValue;
     }
   }
+  // Remove legacy keys to prevent duplicates in email sections
+  for (const legacyKey of Object.keys(FIELD_ALIASES)) {
+    delete normalized[legacyKey];
+  }
   return normalized;
 }
 
@@ -328,8 +332,13 @@ function buildHtmlEmail(data: Record<string, string>): string {
 }
 
 export async function POST(req: NextRequest) {
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isDev) console.log('📥 Submission received at', new Date().toISOString());
+  
   try {
     const rawData: Record<string, string> = await req.json();
+    if (isDev) console.log('✅ Data parsed successfully. Fields count:', Object.keys(rawData).length);
     const data = normalizeSubmissionData(rawData);
 
     const submissionId = `submission_${Date.now()}`;
@@ -342,28 +351,47 @@ export async function POST(req: NextRequest) {
       const ids: string[] = (await kv.get('submission_ids')) ?? [];
       ids.push(submissionId);
       await kv.set('submission_ids', ids);
+      if (isDev) console.log('✅ Data saved to KV store:', submissionId);
     } catch (kvErr) {
-      console.warn('KV save failed (non-fatal):', kvErr);
+      console.warn('⚠️ KV save failed (non-fatal):', kvErr);
     }
 
     // 2. Send email via Resend
     const toEmail = process.env.NOTIFY_EMAIL ?? 'astickley@example.com';
     const fromEmail = process.env.FROM_EMAIL ?? 'onboarding@resend.dev';
 
+    if (isDev) {
+      console.log('📧 Attempting to send email...');
+      console.log('  From:', fromEmail);
+      console.log('  To:', toEmail);
+      console.log('  Resend API Key configured:', process.env.RESEND_API_KEY ? 'Yes' : 'No');
+    }
+
     const p1Name = data.p1_name || 'Unknown';
     const p2Name = data.p2_name || 'Unknown';
 
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      subject: `[Dissolution Intake] ${p1Name} & ${p2Name} — ${new Date().toLocaleDateString('en-US')}`,
-      html: buildHtmlEmail(data),
-    });
+    
+    try {
+      const emailResult = await resend.emails.send({
+        from: fromEmail,
+        to: toEmail,
+        subject: `[Dissolution Intake] ${p1Name} & ${p2Name} — ${new Date().toLocaleDateString('en-US')}`,
+        html: buildHtmlEmail(data),
+      });
+      if (isDev) console.log('✅ Email sent successfully:', emailResult);
+    } catch (emailErr) {
+      console.error('❌ Email sending failed:', emailErr);
+      // Don't throw - we still want to return success if KV save worked
+      if (emailErr instanceof Error) {
+        console.error('Error details:', emailErr.message);
+      }
+    }
 
+    if (isDev) console.log('✅ Submission completed successfully');
     return NextResponse.json({ ok: true, id: submissionId });
   } catch (err: unknown) {
-    console.error('Submit error:', err);
+    console.error('❌ Submit error:', err);
     const msg = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }

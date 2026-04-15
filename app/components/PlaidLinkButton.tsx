@@ -25,25 +25,40 @@ function Spinner() {
   );
 }
 
-export default function PlaidLinkButton({ userId = 'becca-nicole-case', onSuccess }: Props) {
+export default function PlaidLinkButton({ userId, onSuccess }: Props) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [exchanging, setExchanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<PlaidResult | null>(null);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
+  const [tokenVersion, setTokenVersion] = useState(0);
 
+  // Derive a stable per-user ID (review comment #5: avoid shared default)
   useEffect(() => {
+    if (userId) { setEffectiveUserId(userId); return; }
+    const storageKey = 'plaid-link-user-id';
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored) { setEffectiveUserId(stored); return; }
+    const generated = crypto.randomUUID();
+    window.localStorage.setItem(storageKey, generated);
+    setEffectiveUserId(generated);
+  }, [userId]);
+
+  // Fetch link token whenever effectiveUserId changes or tokenVersion bumps
+  useEffect(() => {
+    if (!effectiveUserId) return;
     setLoading(true);
     fetch('/api/plaid/create-link-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId: effectiveUserId }),
     })
       .then(r => r.json())
       .then(d => { if (d.link_token) setLinkToken(d.link_token); else throw new Error(d.error); })
       .catch(() => setError('Could not initialize bank connection. Check your network and try again.'))
       .finally(() => setLoading(false));
-  }, [userId]);
+  }, [effectiveUserId, tokenVersion]);
 
   const handleSuccess = useCallback(async (publicToken: string) => {
     setExchanging(true); setError(null);
@@ -84,7 +99,7 @@ export default function PlaidLinkButton({ userId = 'becca-nicole-case', onSucces
           {breakdown.savings > 0 ? ` · ${breakdown.savings} savings` : ''}
           {breakdown.retirement > 0 ? ` · ${breakdown.retirement} retirement` : ''}
         </p>
-        <button onClick={() => { setConnected(null); setLinkToken(null); setError(null); }}
+        <button onClick={() => { setConnected(null); setLinkToken(null); setError(null); setTokenVersion(v => v + 1); }}
           className="text-xs text-green-600 underline hover:text-green-800">
           Connect a different account
         </button>

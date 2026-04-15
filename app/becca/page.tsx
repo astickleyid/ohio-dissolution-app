@@ -665,7 +665,12 @@ export default function BeccaPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload = normalizeLegacyCaseData({ ...data, _case: 'becca-nicole' });
+      const normalized = normalizeLegacyCaseData({ ...data, _case: 'becca-nicole' });
+      // Remove legacy keys to prevent duplicate fields in email
+      for (const legacyKey of Object.keys(LEGACY_FIELD_ALIASES)) {
+        delete normalized[legacyKey];
+      }
+      const payload = normalized;
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
