@@ -646,16 +646,16 @@ export default function BeccaPage() {
         Review what&apos;s been filled in. Fields marked <span className="text-amber-600 font-medium">⚠ needs info</span> are still blank — you can go back and fill them in, or submit now and we&apos;ll follow up.
       </p>
       <div className="space-y-3">
-        {Object.entries(data).filter(([, v]) => v !== '').map(([k, v]) => (
+        {Object.entries(data).filter(([k, v]) => v !== '' && !k.startsWith('_')).map(([k, v]) => (
           <div key={k} className="flex gap-x-3 text-sm border-b border-gray-100 pb-2">
             <span className="text-gray-400 font-mono text-xs w-48 shrink-0">{k}</span>
             <span className="text-gray-800">{v}</span>
           </div>
         ))}
       </div>
-      {Object.values(data).some(v => v === '') && (
+      {Object.entries(data).some(([k, v]) => v === '' && !k.startsWith('_')) && (
         <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
-          <strong>⚠ Still missing:</strong> {Object.entries(data).filter(([,v]) => v === '').map(([k]) => k).join(', ')}
+          <strong>⚠ Still missing:</strong> {Object.entries(data).filter(([k, v]) => v === '' && !k.startsWith('_')).map(([k]) => k).join(', ')}
         </div>
       )}
     </div>,
