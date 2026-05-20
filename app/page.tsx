@@ -1,6 +1,7 @@
 'use client';
+import PlaidLinkButton, { type PlaidResult } from './components/PlaidLinkButton';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Onboarding from './components/Onboarding';
 
@@ -122,13 +123,103 @@ const TA = ({ label, name, value, onChange, rows = 3, help, placeholder }: TAPro
 export default function Home() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [plaidData, setPlaidData] = useState<PlaidResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<FormData>({});
+  const [caseId, setCaseId] = useState<string>('');
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const set = useCallback((key: string, val: string) =>
     setData((d) => ({ ...d, [key]: val })), []);
   const get = useCallback((key: string) => data[key] ?? '', [data]);
+
+  const hasRestoredRef = useRef(false);
+
+  // Initialize caseId from localStorage on mount (namespaced key)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storageKey = 'intake:caseId';
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      setCaseId(stored);
+    } else {
+      const newId = crypto.randomUUID();
+      localStorage.setItem(storageKey, newId);
+      setCaseId(newId);
+    }
+  }, []);
+
+  // Restore saved data on mount (if caseId is set)
+  useEffect(() => {
+    if (!caseId) return;
+    const restoreData = async () => {
+      try {
+        const res = await fetch(`/api/autosave?caseId=${caseId}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.found && json.data) {
+            setData(json.data.formData || {});
+            setStep(json.data.step || 0);
+            setSavedAt(json.data._saved_at || json.data.saved_at || null);
+          }
+        }
+      } catch {
+        // Silently fail if autosave API isn't available
+      } finally {
+        hasRestoredRef.current = true;
+      }
+    };
+    restoreData();
+  }, [caseId]);
+
+  // Debounced autosave on data/step change (gated on restore completion)
+  const performAutosave = useCallback(
+    async (currentData: FormData, currentStep: number) => {
+      if (!caseId || !hasRestoredRef.current) return;
+      setSaveStatus('saving');
+      try {
+        const res = await fetch('/api/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caseId,
+            data: { formData: currentData, step: currentStep, saved_at: new Date().toISOString() },
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          setSavedAt(json.saved_at);
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } else {
+          setSaveStatus('error');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        }
+      } catch (err) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      }
+    },
+    [caseId]
+  );
+
+  // Trigger debounced save on data/step change
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      performAutosave(data, step);
+    }, 500);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [data, step, performAutosave]);
 
   // Helper wrappers that convert name-based props to value/onChange
   const FieldInput = (props: Omit<FieldProps, 'value' | 'onChange'>) => (
@@ -437,6 +528,23 @@ export default function Home() {
       <InfoBox>
         <strong>List all accounts:</strong> Checking, savings, money market, CDs, brokerage accounts, etc. Even if the account is in only one name, if it was opened during the marriage, it may be considered marital property.
       </InfoBox>
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm font-semibold text-blue-900 mb-1">Optional: Connect your bank to auto-fill</p>
+        <p className="text-xs text-blue-700 mb-3">Securely link your accounts to pre-fill balances and account info. Read-only access only.</p>
+        <PlaidLinkButton
+          userId={caseId || undefined}
+          onSuccess={(result) => {
+            setPlaidData(result);
+            // Pre-fill all Plaid fields in a single state update
+            setData((prev: Record<string, string>) => ({ ...prev, ...result.formFields }));
+          }}
+        />
+        {plaidData && (
+          <p className="text-xs text-green-700 mt-2">
+            Pre-filled from {plaidData.breakdown.total} connected account{plaidData.breakdown.total !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
       <SelectInput label="Do either of you have bank or financial accounts?" name="has_accounts" options={['No','Yes']} help="Checking, savings, investment accounts, etc." />
       {get('has_accounts') === 'Yes' && <>
         <SubH title="Accounts Petitioner 1 Will Keep" />
@@ -665,7 +773,16 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-600">Step {step + 1} of {steps.length}</span>
-            <span className="text-sm font-medium text-gray-600">{Math.round(((step + 1) / steps.length) * 100)}% complete</span>
+            <div className="flex items-center gap-3">
+              {saveStatus === 'saving' && <span className="text-xs text-gray-500">Saving...</span>}
+              {saveStatus === 'saved' && savedAt && (
+                <span className="text-xs text-green-600">
+                  Autosaved {new Date(savedAt).toLocaleTimeString()}
+                </span>
+              )}
+              {saveStatus === 'error' && <span className="text-xs text-red-500">Save failed</span>}
+              <span className="text-sm font-medium text-gray-600">{Math.round(((step + 1) / steps.length) * 100)}%</span>
+            </div>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
             <div
